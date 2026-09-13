@@ -139,6 +139,31 @@ function initInteraction() {
 
     window.addEventListener("mouseup", () => { isDragging = false; });
 
+	// --- 2. Sự kiện cảm ứng (Touch Events cho Điện thoại / Máy tính bảng) ---
+    svg.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            // Tính toán vị trí bắt đầu theo pan hiện tại
+            startX = e.touches[0].clientX - panX;
+            startY = e.touches[0].clientY - panY;
+        }
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+        if (isDragging && e.touches.length === 1) {
+            // Ngăn trình duyệt cuộn trang dính theo thao tác kéo bản đồ trên điện thoại
+            e.preventDefault(); 
+            
+            panX = e.touches[0].clientX - startX;
+            panY = e.touches[0].clientY - startY;
+            renderGraph();
+        }
+    }, { passive: false });
+
+    window.addEventListener("touchend", () => { 
+        isDragging = false; 
+    });
+	
     svg.addEventListener("wheel", (e) => {
         e.preventDefault();
         const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
