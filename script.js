@@ -365,44 +365,32 @@ function parseLinearInequality(str) {
     return { a, b, op, c };
 }
 
-// Tính toán đa giác phần bù bị gạch
-// Tính toán đa giác phần bù bị gạch (Miền nghiệm giữ trắng, phần còn lại bị gạch)
 // Tính toán đa giác phần bù bị gạch (Miền nghiệm giữ trắng, phần còn lại bị gạch)
 function getShadePolygon(x1, y1, x2, y2, a, b, c, op, width, height, cx, cy) {
     let ext = 15000; // Khung mở rộng bao phủ toàn bộ vùng SVG
 
-    // 1. Lấy điểm kiểm tra
-    let testX = 0;
-    let testY = 0;
-    if (Math.abs(c) < 0.0001) {
-        testX = a;
-        testY = b;
-    }
-
-    let valTest = a * testX + b * testY;
-    let satisfies = false;
-    if (op === '<=') satisfies = valTest <= c;
-    else if (op === '<') satisfies = valTest < c;
-    else if (op === '>=') satisfies = valTest >= c;
-    else if (op === '>') satisfies = valTest > c;
-    else if (op === '=') satisfies = true;
-
-    // 2. Vector pháp tuyến trong toán học (Y hướng lên)
+    // 1. Độ dài vectơ pháp tuyến (a, b)
     let len = Math.sqrt(a * a + b * b);
     if (len === 0) return `${x1},${y1} ${x2},${y2} ${x2},${y2} ${x1},${y1}`;
     
     let nx = a / len;
     let ny = b / len;
 
-    // 3. ĐỔI CHIÊU CHO HỆ TỌA ĐỘ MÀN HÌNH SVG (Y hướng xuống)
-    // Vì trục Y SVG ngược với toán học nên thành phần ny phải đảo dấu (-ny)
+    // 2. Chuyển sang hệ tọa độ màn hình SVG (Trục Y hướng xuống)
     let screenNx = nx;
     let screenNy = -ny;
 
-    // ĐẢO LOGIC: Nếu điểm test thỏa mãn (thuộc miền nghiệm -> giữ trắng), 
-    // ta phải quét phần gạch về phía NGƯỢC LẠI hướng pháp tuyến.
-    let sign = satisfies ? 1 : -1;
-    
+    // 3. XÁC ĐỊNH HƯỚNG GẠCH BỎ (Miền không thỏa mãn)
+    // Vectơ (screenNx, screenNy) hướng về phía ax + by > c.
+    // - Nếu BPT yêu cầu (<=) hoặc (<): Miền nghiệm là ax + by <= c.
+    //   -> Ta cần gạch bỏ miền ax + by > c (cùng hướng pháp tuyến -> sign = +1).
+    // - Nếu BPT yêu cầu (>=) hoặc (>): Miền nghiệm là ax + by >= c.
+    //   -> Ta cần gạch bỏ miền ax + by < c (ngược hướng pháp tuyến -> sign = -1).
+    let sign = 1;
+    if (op === '>=' || op === '>') {
+        sign = -1;
+    }
+
     // Hướng dịch chuyển pixel trên màn hình SVG
     let dx = screenNx * sign * ext;
     let dy = screenNy * sign * ext;
@@ -513,54 +501,146 @@ const LearningMode = {
             const container = document.getElementById("learning-container");
             const btn = document.getElementById("btn-toggle-learning");
             
+            // Tìm khối Danh sách bất phương trình
+            const inequalityCardsContainer = document.getElementById("function-cards-container");
+            const inequalitySection = inequalityCardsContainer ? inequalityCardsContainer.closest(".panel-section") : null;
+            
             if (this.isActive) {
                 btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> Thoát Chế độ Học tập`;
                 btn.className = "btn btn-secondary";
                 container.style.display = "block";
+                
+                // Ẩn khối Danh sách bất phương trình
+                if (inequalitySection) {
+                    inequalitySection.style.display = "none";
+                }
+
                 this.startSession();
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-book-open"></i> Bật Chế độ Học tập từng bước`;
                 btn.className = "btn btn-warning";
                 container.style.display = "none";
+
+                // Hiển thị lại khối Danh sách bất phương trình khi thoát
+                if (inequalitySection) {
+                    inequalitySection.style.display = "";
+                }
+
                 inequalities = [];
                 renderGraph();
             }
         });
     },
+	
+	generateRandomExpr(level = 'easy') {
+		let a, b, c, op;
+		const ops = ['<=', '<', '>=', '>'];
+		op = ops[Math.floor(Math.random() * ops.length)];
+
+		if (level === 'easy') {
+			// Mức dễ: a, b trong [-3, 3] (khác 0), c khác 0 (không qua O) để dễ tính
+			a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+			b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+			c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+		} else if (level === 'medium') {
+			// Mức trung bình: Có thể đi qua gốc tọa độ O (c = 0)
+			a = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+			b = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+			c = Math.floor(Math.random() * 7) * (Math.random() < 0.5 ? 1 : -1);
+		} else {
+			// Mức suy biến: a = 0 hoặc b = 0
+			if (Math.random() < 0.5) {
+				a = 0;
+				b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+			} else {
+				a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+				b = 0;
+			}
+			c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+		}
+
+		// Định dạng chuỗi hiển thị đẹp mắt (ví dụ: "2x - 3y <= 6")
+		let exprStr = "";
+		if (a !== 0) {
+			if (a === 1) exprStr += "x";
+			else if (a === -1) exprStr += "-x";
+			else exprStr += `${a}x`;
+		}
+
+		if (b !== 0) {
+			if (exprStr !== "") {
+				if (b > 0) exprStr += ` + ${b === 1 ? '' : b}y`;
+				else exprStr += ` - ${Math.abs(b) === 1 ? '' : Math.abs(b)}y`;
+			} else {
+				if (b === 1) exprStr += "y";
+				else if (b === -1) exprStr += "-y";
+				else exprStr += `${b}y`;
+			}
+		}
+
+		exprStr += ` ${op} ${c}`;
+		return { exprStr, a, b, c, op };
+	},
 
     // BƯỚC 1: Nhập biểu thức
-    startSession() {
-        this.step = 1;
-		this.data.points = []; // Xóa dữ liệu điểm cũ
-        inequalities = []; // Reset màn hình sạch sẽ
-        renderGraph();
+    // Cập nhật Bước 1 với giao diện chọn đề tự động
+	startSession() {
+		this.step = 1;
+		this.data.points = [];
+		inequalities = [];
+		renderGraph();
 
-        const container = document.getElementById("learning-container");
-        container.innerHTML = `
-            <div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 6px;">Bước 1: Nhập bất phương trình</div>
-            <div class="input-row" style="margin-bottom: 8px;">
-                <input type="text" id="learn-expr-input" placeholder="VD: 2x - y < 4" style="flex:1;">
-                <button id="learn-btn-start" class="btn btn-primary" style="min-height: auto; padding: 6px 12px;">Bắt đầu</button>
-            </div>
-            <div id="learn-step-content"></div>
-        `;
+		const container = document.getElementById("learning-container");
+		container.innerHTML = `
+			<div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;">Bước 1: Chọn bài tập</div>
+			
+			<!-- Nút sinh đề tự động -->
+			<div style="background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
+				<div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-light);">Tạo đề ngẫu nhiên:</div>
+				<div style="display: flex; gap: 4px; margin-bottom: 6px;">
+					<select id="learn-level-select" style="flex:1; padding: 4px; font-size: 0.8rem;">
+						<option value="easy">Mức Dễ (Không qua O)</option>
+						<option value="medium">Mức Vừa (Có thể qua O)</option>
+						<option value="hard">Khuyết x hoặc y (a=0 / b=0)</option>
+					</select>
+					<button id="learn-btn-random" class="btn btn-warning" style="min-height: auto; padding: 4px 8px; font-size: 0.8rem;">
+						<i class="fa-solid fa-dice"></i> Sinh đề
+					</button>
+				</div>
+			</div>
 
-        document.getElementById("learn-btn-start").addEventListener("click", () => {
-            const rawExpr = document.getElementById("learn-expr-input").value;
-            const parsed = parseLinearInequality(rawExpr);
-            if (!parsed) {
-                alert("Biểu thức không hợp lệ! Vui lòng nhập dạng ax + by <= c");
-                return;
-            }
-            this.data.expr = rawExpr;
-            this.data.a = parsed.a;
-            this.data.b = parsed.b;
-            this.data.c = parsed.c;
-            this.data.op = parsed.op;
+			<!-- Nhập thủ công -->
+			<div class="input-row" style="margin-bottom: 8px;">
+				<input type="text" id="learn-expr-input" placeholder="VD: 2x - y < 4" style="flex:1;">
+				<button id="learn-btn-start" class="btn btn-primary" style="min-height: auto; padding: 6px 12px;">Bắt đầu</button>
+			</div>
+			<div id="learn-step-content"></div>
+		`;
 
-            this.toStep2();
-        });
-    },
+		// Sự kiện sinh đề ngẫu nhiên
+		document.getElementById("learn-btn-random").addEventListener("click", () => {
+			const level = document.getElementById("learn-level-select").value;
+			const generated = this.generateRandomExpr(level);
+			document.getElementById("learn-expr-input").value = generated.exprStr;
+		});
+
+		// Bắt đầu làm bài
+		document.getElementById("learn-btn-start").addEventListener("click", () => {
+			const rawExpr = document.getElementById("learn-expr-input").value;
+			const parsed = parseLinearInequality(rawExpr);
+			if (!parsed) {
+				alert("Biểu thức không hợp lệ! Vui lòng nhập dạng ax + by <= c");
+				return;
+			}
+			this.data.expr = rawExpr;
+			this.data.a = parsed.a;
+			this.data.b = parsed.b;
+			this.data.c = parsed.c;
+			this.data.op = parsed.op;
+
+			this.toStep2();
+		});
+	},
 
     // BƯỚC 2: Bảng giá trị linh hoạt (Xử lý cả trường hợp suy biến a=0 hoặc b=0)
     toStep2() {
@@ -750,7 +830,7 @@ const LearningMode = {
                 <b>Bước 6: Kết luận miền nghiệm</b><br>
                 Hãy <b>click trực tiếp lên hình vẽ bên phải</b> vào một điểm thuộc <b>miền nghiệm đúng</b> để hệ thống kiểm tra!
             </div>
-            <div id="learn-msg-6" style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-top:4px;">Đang chờ bạn click chọn điểm trên đồ thị...</div>
+            <div id="learn-msg-6" style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-top:4px;">Hãy click chọn miền nghiệm</div>
         `;
 
         // Lắng nghe sự kiện click trên khung SVG đồ thị bên phải
@@ -785,7 +865,7 @@ const LearningMode = {
             const msgBox = document.getElementById("learn-msg-6");
             if (ok) {
                 msgBox.style.color = "var(--success-color)";
-                msgBox.textContent = `Chính xác! Điểm bạn chọn (${clickX.toFixed(1)}; ${clickY.toFixed(1)}) thuộc miền nghiệm. Hoàn thành bài toán! 🎉`;
+                msgBox.textContent = `Em đã chọn đúng miền nghiệm 🎉`;
                 
                 // Gỡ bỏ sự kiện click sau khi hoàn thành đúng
                 svg.removeEventListener("click", this.svgClickHandler);
@@ -794,7 +874,7 @@ const LearningMode = {
 
             } else {
                 msgBox.style.color = "var(--danger-color)";
-                msgBox.textContent = `Chưa đúng! Điểm (${clickX.toFixed(1)}; ${clickY.toFixed(1)}) không thỏa mãn bất phương trình. Hãy thử lại!`;
+                msgBox.textContent = `Xác định miền nghiệm chưa đúng! Hãy thử lại!`;
             }
         };
 
