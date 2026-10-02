@@ -365,38 +365,138 @@ function parseLinearInequality(str) {
     return { a, b, op, c };
 }
 
-// Tính toán đa giác phần bù bị gạch (Miền nghiệm giữ trắng, phần còn lại bị gạch)
 function getShadePolygon(x1, y1, x2, y2, a, b, c, op, width, height, cx, cy) {
-    let ext = 1500000; // Khung mở rộng bao phủ toàn bộ vùng SVG
 
-    // 1. Độ dài vectơ pháp tuyến (a, b)
+    // =========================================================
+    // TRƯỜNG HỢP ĐẶC BIỆT 1: b = 0
+    // Đường biên: ax = c  ->  x = c/a
+    // =========================================================
+    if (Math.abs(b) < 1e-12 && Math.abs(a) > 1e-12) {
+
+        // x1 và x2 chính là tọa độ màn hình của đường x = c/a
+        const boundaryX = (c / a) * 0 + x1;
+
+        // Với <= hoặc < :
+        // miền nghiệm: ax <= c
+        // phần cần gạch: ax > c
+        //
+        // Với >= hoặc > :
+        // miền nghiệm: ax >= c
+        // phần cần gạch: ax < c
+
+        let shadeRight;
+
+        if (op === '<=' || op === '<') {
+            // ax > c
+            shadeRight = a > 0;
+        } else {
+            // ax < c
+            shadeRight = a < 0;
+        }
+
+        if (shadeRight) {
+            // Gạch toàn bộ nửa mặt phẳng bên PHẢI
+            return `
+                ${boundaryX},0
+                ${width},0
+                ${width},${height}
+                ${boundaryX},${height}
+            `;
+        } else {
+            // Gạch toàn bộ nửa mặt phẳng bên TRÁI
+            return `
+                0,0
+                ${boundaryX},0
+                ${boundaryX},${height}
+                0,${height}
+            `;
+        }
+    }
+
+
+    // =========================================================
+    // TRƯỜNG HỢP ĐẶC BIỆT 2: a = 0
+    // Đường biên: by = c  ->  y = c/b
+    // =========================================================
+    if (Math.abs(a) < 1e-12 && Math.abs(b) > 1e-12) {
+
+        // y1 và y2 chính là tọa độ màn hình của đường y = c/b
+        const boundaryY = (c / b) * 0 + y1;
+
+        // Với <= hoặc < :
+        // miền nghiệm: by <= c
+        // phần cần gạch: by > c
+        //
+        // Với >= hoặc > :
+        // miền nghiệm: by >= c
+        // phần cần gạch: by < c
+
+        let shadeTop;
+
+        if (op === '<=' || op === '<') {
+            // by > c
+            // Nếu b > 0 => y toán học lớn hơn => nằm phía trên màn hình
+            shadeTop = b > 0;
+        } else {
+            // by < c
+            shadeTop = b < 0;
+        }
+
+        if (shadeTop) {
+            // Gạch toàn bộ nửa mặt phẳng phía TRÊN
+            return `
+                0,0
+                ${width},0
+                ${width},${boundaryY}
+                0,${boundaryY}
+            `;
+        } else {
+            // Gạch toàn bộ nửa mặt phẳng phía DƯỚI
+            return `
+                0,${boundaryY}
+                ${width},${boundaryY}
+                ${width},${height}
+                0,${height}
+            `;
+        }
+    }
+
+
+    // =========================================================
+    // TRƯỜNG HỢP TỔNG QUÁT: a != 0 và b != 0
+    // =========================================================
+
+    let ext = Math.max(width, height) * 3;
+
+    // Độ dài vectơ pháp tuyến
     let len = Math.sqrt(a * a + b * b);
-    if (len === 0) return `${x1},${y1} ${x2},${y2} ${x2},${y2} ${x1},${y1}`;
-    
+    if (len === 0) {
+        return `${x1},${y1} ${x2},${y2}`;
+    }
+
     let nx = a / len;
     let ny = b / len;
 
-    // 2. Chuyển sang hệ tọa độ màn hình SVG (Trục Y hướng xuống)
+    // Chuyển sang hệ tọa độ màn hình SVG
     let screenNx = nx;
     let screenNy = -ny;
 
-    // 3. XÁC ĐỊNH HƯỚNG GẠCH BỎ (Miền không thỏa mãn)
-    // Vectơ (screenNx, screenNy) hướng về phía ax + by > c.
-    // - Nếu BPT yêu cầu (<=) hoặc (<): Miền nghiệm là ax + by <= c.
-    //   -> Ta cần gạch bỏ miền ax + by > c (cùng hướng pháp tuyến -> sign = +1).
-    // - Nếu BPT yêu cầu (>=) hoặc (>): Miền nghiệm là ax + by >= c.
-    //   -> Ta cần gạch bỏ miền ax + by < c (ngược hướng pháp tuyến -> sign = -1).
+    // Xác định phía cần gạch
     let sign = 1;
+
     if (op === '>=' || op === '>') {
         sign = -1;
     }
 
-    // Hướng dịch chuyển pixel trên màn hình SVG
     let dx = screenNx * sign * ext;
     let dy = screenNy * sign * ext;
 
-    // Trả về tọa độ đa giác gạch chéo
-    return `${x1},${y1} ${x2},${y2} ${x2 + dx},${y2 + dy} ${x1 + dx},${y1 + dy}`;
+    return `
+        ${x1},${y1}
+        ${x2},${y2}
+        ${x2 + dx},${y2 + dy}
+        ${x1 + dx},${y1 + dy}
+    `;
 }
 
 async function copyGraphToClipboard() {
