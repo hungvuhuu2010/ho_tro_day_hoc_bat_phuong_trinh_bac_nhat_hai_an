@@ -367,7 +367,7 @@ function parseLinearInequality(str) {
 
 // Tính toán đa giác phần bù bị gạch (Miền nghiệm giữ trắng, phần còn lại bị gạch)
 function getShadePolygon(x1, y1, x2, y2, a, b, c, op, width, height, cx, cy) {
-    let ext = 15000; // Khung mở rộng bao phủ toàn bộ vùng SVG
+    let ext = 1500000; // Khung mở rộng bao phủ toàn bộ vùng SVG
 
     // 1. Độ dài vectơ pháp tuyến (a, b)
     let len = Math.sqrt(a * a + b * b);
