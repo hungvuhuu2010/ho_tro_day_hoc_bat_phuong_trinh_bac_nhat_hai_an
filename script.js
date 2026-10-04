@@ -365,139 +365,140 @@ function parseLinearInequality(str) {
     return { a, b, op, c };
 }
 
-function getShadePolygon(x1, y1, x2, y2, a, b, c, op, width, height, cx, cy) {
+	// Tính toán đa giác phần bù bị gạch (Miền nghiệm giữ trắng, phần còn lại bị gạch)
+	function getShadePolygon(x1, y1, x2, y2, a, b, c, op, width, height, cx, cy) {
 
-    // =========================================================
-    // TRƯỜNG HỢP ĐẶC BIỆT 1: b = 0
-    // Đường biên: ax = c  ->  x = c/a
-    // =========================================================
-    if (Math.abs(b) < 1e-12 && Math.abs(a) > 1e-12) {
+		// =========================================================
+		// TRƯỜNG HỢP ĐẶC BIỆT 1: b = 0
+		// Đường biên: ax = c  ->  x = c/a
+		// =========================================================
+		if (Math.abs(b) < 1e-12 && Math.abs(a) > 1e-12) {
 
-        // x1 và x2 chính là tọa độ màn hình của đường x = c/a
-        const boundaryX = (c / a) * 0 + x1;
+			// x1 và x2 chính là tọa độ màn hình của đường x = c/a
+			const boundaryX = (c / a) * 0 + x1;
 
-        // Với <= hoặc < :
-        // miền nghiệm: ax <= c
-        // phần cần gạch: ax > c
-        //
-        // Với >= hoặc > :
-        // miền nghiệm: ax >= c
-        // phần cần gạch: ax < c
+			// Với <= hoặc < :
+			// miền nghiệm: ax <= c
+			// phần cần gạch: ax > c
+			//
+			// Với >= hoặc > :
+			// miền nghiệm: ax >= c
+			// phần cần gạch: ax < c
 
-        let shadeRight;
+			let shadeRight;
 
-        if (op === '<=' || op === '<') {
-            // ax > c
-            shadeRight = a > 0;
-        } else {
-            // ax < c
-            shadeRight = a < 0;
-        }
+			if (op === '<=' || op === '<') {
+				// ax > c
+				shadeRight = a > 0;
+			} else {
+				// ax < c
+				shadeRight = a < 0;
+			}
 
-        if (shadeRight) {
-            // Gạch toàn bộ nửa mặt phẳng bên PHẢI
-            return `
-                ${boundaryX},0
-                ${width},0
-                ${width},${height}
-                ${boundaryX},${height}
-            `;
-        } else {
-            // Gạch toàn bộ nửa mặt phẳng bên TRÁI
-            return `
-                0,0
-                ${boundaryX},0
-                ${boundaryX},${height}
-                0,${height}
-            `;
-        }
-    }
-
-
-    // =========================================================
-    // TRƯỜNG HỢP ĐẶC BIỆT 2: a = 0
-    // Đường biên: by = c  ->  y = c/b
-    // =========================================================
-    if (Math.abs(a) < 1e-12 && Math.abs(b) > 1e-12) {
-
-        // y1 và y2 chính là tọa độ màn hình của đường y = c/b
-        const boundaryY = (c / b) * 0 + y1;
-
-        // Với <= hoặc < :
-        // miền nghiệm: by <= c
-        // phần cần gạch: by > c
-        //
-        // Với >= hoặc > :
-        // miền nghiệm: by >= c
-        // phần cần gạch: by < c
-
-        let shadeTop;
-
-        if (op === '<=' || op === '<') {
-            // by > c
-            // Nếu b > 0 => y toán học lớn hơn => nằm phía trên màn hình
-            shadeTop = b > 0;
-        } else {
-            // by < c
-            shadeTop = b < 0;
-        }
-
-        if (shadeTop) {
-            // Gạch toàn bộ nửa mặt phẳng phía TRÊN
-            return `
-                0,0
-                ${width},0
-                ${width},${boundaryY}
-                0,${boundaryY}
-            `;
-        } else {
-            // Gạch toàn bộ nửa mặt phẳng phía DƯỚI
-            return `
-                0,${boundaryY}
-                ${width},${boundaryY}
-                ${width},${height}
-                0,${height}
-            `;
-        }
-    }
+			if (shadeRight) {
+				// Gạch toàn bộ nửa mặt phẳng bên PHẢI
+				return `
+					${boundaryX},0
+					${width},0
+					${width},${height}
+					${boundaryX},${height}
+				`;
+			} else {
+				// Gạch toàn bộ nửa mặt phẳng bên TRÁI
+				return `
+					0,0
+					${boundaryX},0
+					${boundaryX},${height}
+					0,${height}
+				`;
+			}
+		}
 
 
-    // =========================================================
-    // TRƯỜNG HỢP TỔNG QUÁT: a != 0 và b != 0
-    // =========================================================
+		// =========================================================
+		// TRƯỜNG HỢP ĐẶC BIỆT 2: a = 0
+		// Đường biên: by = c  ->  y = c/b
+		// =========================================================
+		if (Math.abs(a) < 1e-12 && Math.abs(b) > 1e-12) {
 
-    let ext = Math.max(width, height) * 3;
+			// y1 và y2 chính là tọa độ màn hình của đường y = c/b
+			const boundaryY = (c / b) * 0 + y1;
 
-    // Độ dài vectơ pháp tuyến
-    let len = Math.sqrt(a * a + b * b);
-    if (len === 0) {
-        return `${x1},${y1} ${x2},${y2}`;
-    }
+			// Với <= hoặc < :
+			// miền nghiệm: by <= c
+			// phần cần gạch: by > c
+			//
+			// Với >= hoặc > :
+			// miền nghiệm: by >= c
+			// phần cần gạch: by < c
 
-    let nx = a / len;
-    let ny = b / len;
+			let shadeTop;
 
-    // Chuyển sang hệ tọa độ màn hình SVG
-    let screenNx = nx;
-    let screenNy = -ny;
+			if (op === '<=' || op === '<') {
+				// by > c
+				// Nếu b > 0 => y toán học lớn hơn => nằm phía trên màn hình
+				shadeTop = b > 0;
+			} else {
+				// by < c
+				shadeTop = b < 0;
+			}
 
-    // Xác định phía cần gạch
-    let sign = 1;
+			if (shadeTop) {
+				// Gạch toàn bộ nửa mặt phẳng phía TRÊN
+				return `
+					0,0
+					${width},0
+					${width},${boundaryY}
+					0,${boundaryY}
+				`;
+			} else {
+				// Gạch toàn bộ nửa mặt phẳng phía DƯỚI
+				return `
+					0,${boundaryY}
+					${width},${boundaryY}
+					${width},${height}
+					0,${height}
+				`;
+			}
+		}
 
-    if (op === '>=' || op === '>') {
-        sign = -1;
-    }
 
-    let dx = screenNx * sign * ext;
-    let dy = screenNy * sign * ext;
+		// =========================================================
+		// TRƯỜNG HỢP TỔNG QUÁT: a != 0 và b != 0
+		// =========================================================
 
-    return `
-        ${x1},${y1}
-        ${x2},${y2}
-        ${x2 + dx},${y2 + dy}
-        ${x1 + dx},${y1 + dy}
-    `;
-}
+		let ext = Math.max(width, height) * 3;
+
+		// Độ dài vectơ pháp tuyến
+		let len = Math.sqrt(a * a + b * b);
+		if (len === 0) {
+			return `${x1},${y1} ${x2},${y2}`;
+		}
+
+		let nx = a / len;
+		let ny = b / len;
+
+		// Chuyển sang hệ tọa độ màn hình SVG
+		let screenNx = nx;
+		let screenNy = -ny;
+
+		// Xác định phía cần gạch
+		let sign = 1;
+
+		if (op === '>=' || op === '>') {
+			sign = -1;
+		}
+
+		let dx = screenNx * sign * ext;
+		let dy = screenNy * sign * ext;
+
+		return `
+			${x1},${y1}
+			${x2},${y2}
+			${x2 + dx},${y2 + dy}
+			${x1 + dx},${y1 + dy}
+		`;
+	}
 
 async function copyGraphToClipboard() {
     const viewport = document.querySelector(".graph-viewport");
@@ -563,16 +564,20 @@ async function copyGraphToClipboard() {
 
 
 
+
 // ==========================================
-// MODULE: CHẾ ĐỘ HỌC TẬP (LEARNING MODE) - NÂNG CẤP
+// MODULE: CHẾ ĐỘ HỌC TẬP (LEARNING MODE) - 2 NHÁNH
 // ==========================================
 const LearningMode = {
     isActive: false,
+    mode: 'basic', // 'basic' | 'reflex'
+    studentName: '',
+    score: 0,
     step: 1,
     data: {
         expr: "",
         a: 0, b: 0, c: 0, op: "",
-        points: [], // Danh sách các điểm học sinh tìm được
+        points: [],
         testPoint: { x: 0, y: 0 }
     },
 
@@ -580,7 +585,6 @@ const LearningMode = {
         const panel = document.querySelector(".control-panel");
         if (!panel) return;
 
-        // Nếu đã có giao diện cũ thì xóa đi tạo lại bản mới
         const oldModule = document.getElementById("learning-module-section");
         if (oldModule) oldModule.remove();
 
@@ -592,6 +596,17 @@ const LearningMode = {
             <button id="btn-toggle-learning" class="btn btn-warning">
                 <i class="fa-solid fa-book-open"></i> Bật Chế độ Học tập từng bước
             </button>
+            
+            <!-- Khung thông tin học sinh & Điểm số (Chế độ Phản xạ) -->
+            <div id="reflex-score-card" style="display: none; margin-top: 10px; padding: 10px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px;">
+                <div style="font-size: 0.85rem; font-weight: bold; color: var(--primary-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-user-graduate"></i> <span id="display-student-name">...</span></span>
+                    <span style="background: #2563eb; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">
+                        Điểm: <span id="display-student-score">0</span>/10
+                    </span>
+                </div>
+            </div>
+
             <div id="learning-container" style="display: none; margin-top: 10px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);"></div>
         `;
         panel.prepend(modeSwitchDiv);
@@ -599,9 +614,9 @@ const LearningMode = {
         document.getElementById("btn-toggle-learning").addEventListener("click", () => {
             this.isActive = !this.isActive;
             const container = document.getElementById("learning-container");
+            const scoreCard = document.getElementById("reflex-score-card");
             const btn = document.getElementById("btn-toggle-learning");
             
-            // Tìm khối Danh sách bất phương trình
             const inequalityCardsContainer = document.getElementById("function-cards-container");
             const inequalitySection = inequalityCardsContainer ? inequalityCardsContainer.closest(".panel-section") : null;
             
@@ -610,151 +625,212 @@ const LearningMode = {
                 btn.className = "btn btn-secondary";
                 container.style.display = "block";
                 
-                // Ẩn khối Danh sách bất phương trình
-                if (inequalitySection) {
-                    inequalitySection.style.display = "none";
-                }
-
-                this.startSession();
+                if (inequalitySection) inequalitySection.style.display = "none";
+                this.selectBranch();
             } else {
                 btn.innerHTML = `<i class="fa-solid fa-book-open"></i> Bật Chế độ Học tập từng bước`;
                 btn.className = "btn btn-warning";
                 container.style.display = "none";
+                scoreCard.style.display = "none";
 
-                // Hiển thị lại khối Danh sách bất phương trình khi thoát
-                if (inequalitySection) {
-                    inequalitySection.style.display = "";
-                }
-
+                if (inequalitySection) inequalitySection.style.display = "";
                 inequalities = [];
                 renderGraph();
             }
         });
     },
-	
-	generateRandomExpr(level = 'easy') {
-		let a, b, c, op;
-		const ops = ['<=', '<', '>=', '>'];
-		op = ops[Math.floor(Math.random() * ops.length)];
 
-		if (level === 'easy') {
-			// Mức dễ: a, b trong [-3, 3] (khác 0), c khác 0 (không qua O) để dễ tính
-			a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
-			b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
-			c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
-		} else if (level === 'medium') {
-			// Mức trung bình: Có thể đi qua gốc tọa độ O (c = 0)
-			a = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
-			b = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
-			c = Math.floor(Math.random() * 7) * (Math.random() < 0.5 ? 1 : -1);
-		} else {
-			// Mức suy biến: a = 0 hoặc b = 0
-			if (Math.random() < 0.5) {
-				a = 0;
-				b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
-			} else {
-				a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
-				b = 0;
-			}
-			c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
-		}
+    // Màn hình chọn Nhánh 1 hoặc Nhánh 2
+    selectBranch() {
+        document.getElementById("reflex-score-card").style.display = "none";
+        const container = document.getElementById("learning-container");
+        container.innerHTML = `
+            <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; text-align: center;">Chọn chế độ học tập</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button id="btn-branch-basic" class="btn btn-primary" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-book"></i> Nhánh 1: Tự học cơ bản (Không tính điểm)
+                </button>
+                <button id="btn-branch-reflex" class="btn btn-success" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-bolt"></i> Nhánh 2: Chế độ Phản xạ (Thách thức 10 điểm)
+                </button>
+            </div>
+        `;
 
-		// Định dạng chuỗi hiển thị đẹp mắt (ví dụ: "2x - 3y <= 6")
-		let exprStr = "";
-		if (a !== 0) {
-			if (a === 1) exprStr += "x";
-			else if (a === -1) exprStr += "-x";
-			else exprStr += `${a}x`;
-		}
+        document.getElementById("btn-branch-basic").addEventListener("click", () => {
+            this.mode = 'basic';
+            this.startSession();
+        });
 
-		if (b !== 0) {
-			if (exprStr !== "") {
-				if (b > 0) exprStr += ` + ${b === 1 ? '' : b}y`;
-				else exprStr += ` - ${Math.abs(b) === 1 ? '' : Math.abs(b)}y`;
-			} else {
-				if (b === 1) exprStr += "y";
-				else if (b === -1) exprStr += "-y";
-				else exprStr += `${b}y`;
-			}
-		}
+        document.getElementById("btn-branch-reflex").addEventListener("click", () => {
+            this.mode = 'reflex';
+            this.startReflexSetup();
+        });
+    },
 
-		exprStr += ` ${op} ${c}`;
-		return { exprStr, a, b, c, op };
-	},
+    // Thiết lập Nhánh 2 (Nhập tên học sinh)
+    startReflexSetup() {
+        const container = document.getElementById("learning-container");
+        container.innerHTML = `
+            <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">Chế độ Phản xạ - Thách thức 10 điểm</div>
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px;">
+                Chọn đúng miền nghiệm được +1 điểm, chọn sai điểm về 0. Đạt 10 điểm để chiến thắng!
+            </div>
+            <div class="input-group" style="margin-bottom: 8px;">
+                <label for="student-name-input">Họ và tên học sinh:</label>
+                <input type="text" id="student-name-input" placeholder="Nhập họ tên của em..." style="font-size: 0.85rem;">
+            </div>
+            <button id="btn-start-reflex" class="btn btn-success" style="width: 100%; font-size: 0.85rem;">
+                <i class="fa-solid fa-play"></i> Bắt đầu làm bài
+            </button>
+        `;
 
-    // BƯỚC 1: Nhập biểu thức
-    // Cập nhật Bước 1 với giao diện chọn đề tự động
-	startSession() {
-		this.step = 1;
-		this.data.points = [];
-		inequalities = [];
-		renderGraph();
+        document.getElementById("btn-start-reflex").addEventListener("click", () => {
+            const name = document.getElementById("student-name-input").value.trim();
+            if (!name) {
+                alert("Vui lòng nhập Họ và tên trước khi bắt đầu!");
+                return;
+            }
+            this.studentName = name;
+            this.score = 0;
 
-		const container = document.getElementById("learning-container");
-		container.innerHTML = `
-			<div style="font-size: 0.9rem; font-weight: 600; margin-bottom: 8px;">Bước 1: Chọn bài tập</div>
-			
-			<!-- Nút sinh đề tự động -->
-			<div style="background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 10px;">
-				<div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: var(--text-light);">Tạo đề ngẫu nhiên:</div>
-				<div style="display: flex; gap: 4px; margin-bottom: 6px;">
-					<select id="learn-level-select" style="flex:1; padding: 4px; font-size: 0.8rem;">
-						<option value="easy">Mức Dễ (Không qua O)</option>
-						<option value="medium">Mức Vừa (Có thể qua O)</option>
-						<option value="hard">Khuyết x hoặc y (a=0 / b=0)</option>
-					</select>
-					<button id="learn-btn-random" class="btn btn-warning" style="min-height: auto; padding: 4px 8px; font-size: 0.8rem;">
-						<i class="fa-solid fa-dice"></i> Sinh đề
-					</button>
-				</div>
-			</div>
+            document.getElementById("display-student-name").textContent = this.studentName;
+            document.getElementById("display-student-score").textContent = this.score;
+            document.getElementById("reflex-score-card").style.display = "block";
 
-			<!-- Nhập thủ công -->
-			<div class="input-row" style="margin-bottom: 8px;">
-				<input type="text" id="learn-expr-input" placeholder="VD: 2x - y < 4" style="flex:1;">
-				<button id="learn-btn-start" class="btn btn-primary" style="min-height: auto; padding: 6px 12px;">Bắt đầu</button>
-			</div>
-			<div id="learn-step-content"></div>
-		`;
+            this.startSession();
+        });
+    },
 
-		// Sự kiện sinh đề ngẫu nhiên
-		document.getElementById("learn-btn-random").addEventListener("click", () => {
-			const level = document.getElementById("learn-level-select").value;
-			const generated = this.generateRandomExpr(level);
-			document.getElementById("learn-expr-input").value = generated.exprStr;
-		});
+    generateRandomExpr() {
+        const rand = Math.random();
+        let level = 'easy';
+        if (rand < 0.65) level = 'easy';       // 65% Dễ (a,b khác 0, c khác 0)
+        else if (rand < 0.85) level = 'medium'; // 20% Qua O (c = 0)
+        else level = 'hard';                     // 15% Khuyết a hoặc b
 
-		// Bắt đầu làm bài
-		document.getElementById("learn-btn-start").addEventListener("click", () => {
-			const rawExpr = document.getElementById("learn-expr-input").value;
-			const parsed = parseLinearInequality(rawExpr);
-			if (!parsed) {
-				alert("Biểu thức không hợp lệ! Vui lòng nhập dạng ax + by <= c");
-				return;
-			}
-			this.data.expr = rawExpr;
-			this.data.a = parsed.a;
-			this.data.b = parsed.b;
-			this.data.c = parsed.c;
-			this.data.op = parsed.op;
+        let a, b, c, op;
+        const ops = ['<=', '<', '>=', '>'];
+        op = ops[Math.floor(Math.random() * ops.length)];
 
-			this.toStep2();
-		});
-	},
+        if (level === 'easy') {
+            a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+        } else if (level === 'medium') {
+            a = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            b = (Math.floor(Math.random() * 4) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            c = 0;
+        } else {
+            if (Math.random() < 0.5) {
+                a = 0;
+                b = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            } else {
+                a = (Math.floor(Math.random() * 3) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                b = 0;
+            }
+            c = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+        }
 
-    // BƯỚC 2: Bảng giá trị linh hoạt (Xử lý cả trường hợp suy biến a=0 hoặc b=0)
+        let exprStr = "";
+        if (a !== 0) {
+            if (a === 1) exprStr += "x";
+            else if (a === -1) exprStr += "-x";
+            else exprStr += `${a}x`;
+        }
+
+        if (b !== 0) {
+            if (exprStr !== "") {
+                if (b > 0) exprStr += ` + ${b === 1 ? '' : b}y`;
+                else exprStr += ` - ${Math.abs(b) === 1 ? '' : Math.abs(b)}y`;
+            } else {
+                if (b === 1) exprStr += "y";
+                else if (b === -1) exprStr += "-y";
+                else exprStr += `${b}y`;
+            }
+        }
+
+        exprStr += ` ${op} ${c}`;
+        return { exprStr, a, b, c, op };
+    },
+
+    // BƯỚC 1
+    startSession() {
+        this.step = 1;
+        this.data.points = [];
+        inequalities = [];
+        renderGraph();
+
+        const container = document.getElementById("learning-container");
+
+        if (this.mode === 'basic') {
+            container.innerHTML = `
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">
+                    Nhánh 1: Tự học cơ bản
+                </div>
+                <div style="background: #f1f5f9; padding: 8px; border-radius: 6px; margin-bottom: 8px;">
+                    <button id="learn-btn-random" class="btn btn-warning" style="width: 100%; min-height: auto; padding: 6px; font-size: 0.8rem;">
+                        <i class="fa-solid fa-dice"></i> Sinh đề ngẫu nhiên
+                    </button>
+                </div>
+                <div class="input-row" style="margin-bottom: 8px;">
+                    <input type="text" id="learn-expr-input" placeholder="VD: 2x - y < 4" style="flex:1;">
+                    <button id="learn-btn-start" class="btn btn-primary" style="min-height: auto; padding: 6px 12px;">Bắt đầu</button>
+                </div>
+                <div id="learn-step-content"></div>
+            `;
+
+            document.getElementById("learn-btn-random").addEventListener("click", () => {
+                const generated = this.generateRandomExpr();
+                document.getElementById("learn-expr-input").value = generated.exprStr;
+            });
+
+            document.getElementById("learn-btn-start").addEventListener("click", () => {
+                const rawExpr = document.getElementById("learn-expr-input").value;
+                const parsed = parseLinearInequality(rawExpr);
+                if (!parsed) {
+                    alert("Biểu thức không hợp lệ! Vui lòng nhập dạng ax + by <= c");
+                    return;
+                }
+                this.data.expr = rawExpr;
+                this.data.a = parsed.a;
+                this.data.b = parsed.b;
+                this.data.c = parsed.c;
+                this.data.op = parsed.op;
+
+                this.toStep2();
+            });
+        } else {
+            // Chế độ Phản xạ: Tự động sinh đề luôn
+            const generated = this.generateRandomExpr();
+            this.data.expr = generated.exprStr;
+            this.data.a = generated.a;
+            this.data.b = generated.b;
+            this.data.c = generated.c;
+            this.data.op = generated.op;
+
+            container.innerHTML = `
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px;">
+                    Câu ${this.score + 1}: ${this.data.expr}
+                </div>
+                <div id="learn-step-content"></div>
+            `;
+
+            this.toStep2();
+        }
+    },
+
+    // BƯỚC 2: Bảng giá trị
     toStep2() {
         this.step = 2;
         const content = document.getElementById("learn-step-content");
         
-        // Gợi ý thông minh tùy thuộc vào hệ số a, b
-        let hintText = "Lập bảng giá trị (chọn các giá trị x hoặc y thuận lợi):";
-        if (this.data.a === 0) hintText = `Vì $a = 0$, phương trình trở thành $y = ${this.data.c / this.data.b}$. Hãy điền các điểm có tung độ cố định!`;
-        if (this.data.b === 0) hintText = `Vì $b = 0$, phương trình trở thành $x = ${this.data.c / this.data.a}$. Hãy điền các điểm có hoành độ cố định!`;
+        let hintText = "Lập bảng giá trị:";
+        if (this.data.a === 0) hintText = `Vì a = 0, y = ${this.data.c / this.data.b}. Điền các điểm có y cố định:`;
+        if (this.data.b === 0) hintText = `Vì b = 0, x = ${this.data.c / this.data.a}. Điền các điểm có x cố định:`;
 
         content.innerHTML = `
             <hr style="margin: 8px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 6px;">
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 6px;">
                 <b>Bước 2:</b> ${hintText}
             </div>
             <table style="width:100%; font-size:0.85rem; margin-bottom:6px; border-collapse:collapse;" border="1">
@@ -772,7 +848,6 @@ const LearningMode = {
             const y2 = parseFloat(document.getElementById("ly2").value);
             const msgBox = document.getElementById("learn-msg-2");
 
-            // Kiểm tra xem 2 cặp điểm có thỏa mãn phương trình đường biên ax + by = c không và phải phân biệt
             const check1 = Math.abs((this.data.a * x1 + this.data.b * y1) - this.data.c) < 0.001;
             const check2 = Math.abs((this.data.a * x2 + this.data.b * y2) - this.data.c) < 0.001;
             const distinct = Math.abs(x1 - x2) > 0.001 || Math.abs(y1 - y2) > 0.001;
@@ -780,28 +855,27 @@ const LearningMode = {
             if (check1 && check2 && distinct) {
                 this.data.points = [{x: x1, y: y1}, {x: x2, y: y2}];
                 msgBox.style.color = "var(--success-color)";
-                msgBox.textContent = "Chính xác! Tọa độ 2 điểm thỏa mãn đường biên.";
-                setTimeout(() => this.toStep3(), 1000);
+                msgBox.textContent = "Chính xác!";
+                setTimeout(() => this.toStep3(), 800);
             } else {
                 msgBox.style.color = "var(--danger-color)";
-                msgBox.textContent = "Tọa độ 2 điểm không đúng hoặc trùng nhau, hãy kiểm tra lại!";
+                msgBox.textContent = "Tọa độ 2 điểm chưa đúng hoặc trùng nhau!";
             }
         });
     },
 
-    // BƯỚC 3: Chỉ hiển thị 2 điểm màu đỏ nổi bật trên mặt phẳng, CHƯA vẽ đường thẳng
+    // BƯỚC 3
     toStep3() {
         this.step = 3;
         const content = document.getElementById("learn-step-content");
 
-        // Vẽ lại đồ thị sạch, sau đó chèn 2 điểm đỏ lên SVG bằng DOM phụ trợ
         renderGraph();
         this.drawHighlightPoints();
 
         content.innerHTML = `
             <hr style="margin: 8px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px;">
-                <b>Bước 3:</b> Đã định vị 2 điểm trên mặt phẳng tọa độ (chấm đỏ). Hãy dùng thước vẽ đường thẳng đi qua 2 điểm này!
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 6px;">
+                <b>Bước 3:</b> Đã định vị 2 điểm trên mặt phẳng (chấm đỏ).
             </div>
             <button id="learn-btn-step3" class="btn btn-primary" style="width:100%; font-size:0.85rem; padding:6px;">Hiển thị đường biên</button>
         `;
@@ -811,7 +885,6 @@ const LearningMode = {
         });
     },
 
-    // Hàm phụ vẽ chấm đỏ điểm A, B lên SVG
     drawHighlightPoints() {
         const svg = document.getElementById("coordinate-system");
         if (!svg) return;
@@ -831,25 +904,22 @@ const LearningMode = {
         svg.innerHTML += extraSVG;
     },
 
-    // BƯỚC 4: Hiển thị đường biên chính thức (chỉ vẽ đường thẳng/biên, chưa gạch miền nghiệm)
+    // BƯỚC 4
     toStep4() {
         this.step = 4;
         const content = document.getElementById("learn-step-content");
-	
-        // Thay thế toán tử so sánh trong biểu thức thành dấu "=" để hàm gốc chỉ vẽ đường biên
-        let exprForBoundary = this.data.expr.replace(/[<>]=?|=/, '=');
 
-        // Đưa vào mảng inequalities với kiểu pattern đặc biệt hoặc tạm thời vẽ đường thẳng
+        let exprForBoundary = this.data.expr.replace(/[<>]=?|=/, '=');
         inequalities = [{ expr: exprForBoundary, color: "#2563eb", pattern: "solid" }];
         renderGraph();
-		this.drawHighlightPoints();
-		
+        this.drawHighlightPoints();
+
         content.innerHTML = `
             <hr style="margin: 8px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px;">
-                <b>Bước 4:</b> Đã dựng đường biên của bất phương trình (đường thẳng ứng với dấu "=").
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 6px;">
+                <b>Bước 4:</b> Đã dựng đường biên ứng với dấu "=".
             </div>
-            <button id="learn-btn-step4" class="btn btn-primary" style="width:100%; font-size:0.85rem; padding:6px;">Tiếp tục lấy điểm thử</button>
+            <button id="learn-btn-step4" class="btn btn-primary" style="width:100%; font-size:0.85rem; padding:6px;">Lấy điểm thử</button>
         `;
 
         document.getElementById("learn-btn-step4").addEventListener("click", () => {
@@ -857,12 +927,11 @@ const LearningMode = {
         });
     },
 
-    // BƯỚC 5: Sinh điểm thử ngẫu nhiên và hỏi học sinh kiểm tra
+    // BƯỚC 5
     toStep5() {
         this.step = 5;
         const content = document.getElementById("learn-step-content");
 
-        // Sinh điểm ngẫu nhiên: nếu c = 0 lấy (a, b), ngược lại lấy (0, 0)
         let tx = 0, ty = 0;
         if (Math.abs(this.data.c) < 0.0001) {
             tx = this.data.a !== 0 ? this.data.a : 1;
@@ -874,9 +943,9 @@ const LearningMode = {
 
         content.innerHTML = `
             <hr style="margin: 8px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px;">
-                <b>Bước 5:</b> Xét điểm thử <b>M(${tx}; ${ty})</b>.<br>
-                Điểm này có nằm trên đường biên hay không?
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 6px;">
+                <b>Bước 5:</b> Xét điểm <b>M(${tx}; ${ty})</b>.<br>
+                Điểm này có nằm trên đường biên không?
             </div>
             <div class="zoom-pan-controls" style="margin-bottom:6px;">
                 <button id="btn-ans-yes" class="btn btn-secondary" style="flex:1; font-size:0.85rem;">Có</button>
@@ -891,11 +960,11 @@ const LearningMode = {
             const msg = document.getElementById("learn-msg-5");
             if (checkOnBoundary) {
                 msg.style.color = "var(--success-color)";
-                msg.textContent = "Chính xác! Điểm này nằm trên đường biên.";
-                setTimeout(() => this.toStep6(), 1000);
+                msg.textContent = "Chính xác!";
+                setTimeout(() => this.toStep6(), 800);
             } else {
                 msg.style.color = "var(--danger-color)";
-                msg.textContent = "Chưa đúng, điểm này không nằm trên đường biên.";
+                msg.textContent = "Chưa đúng!";
             }
         });
 
@@ -903,40 +972,32 @@ const LearningMode = {
             const msg = document.getElementById("learn-msg-5");
             if (!checkOnBoundary) {
                 msg.style.color = "var(--success-color)";
-                msg.textContent = "Chính xác! Điểm này không thuộc đường biên, hợp lệ để làm điểm thử.";
-                setTimeout(() => this.toStep6(), 1000);
+                msg.textContent = "Chính xác! Điểm này hợp lệ làm điểm thử.";
+                setTimeout(() => this.toStep6(), 800);
             } else {
                 msg.style.color = "var(--danger-color)";
-                msg.textContent = "Chưa đúng, thực tế điểm này nằm trên đường biên.";
+                msg.textContent = "Chưa đúng, điểm này nằm trên đường biên!";
             }
         });
     },
 
-    // BƯỚC 6: Tương tác chấm điểm trên hình ảnh để kết luận miền nghiệm
+    // BƯỚC 6: Click miền nghiệm & Tính điểm
     toStep6() {
         this.step = 6;
         const content = document.getElementById("learn-step-content");
-        
-        let tx = this.data.testPoint.x;
-        let ty = this.data.testPoint.y;
 
-        // QUAN TRỌNG: Đưa biểu thức GỐC (có chứa dấu <, >, <=, >=) trở lại mảng inequalities 
-        // để hàm renderGraph kích hoạt vẽ vùng gạch miền nghiệm.
         inequalities = [{ expr: this.data.expr, color: "#2563eb", pattern: "slash" }];
         
         content.innerHTML = `
             <hr style="margin: 8px 0; border:0; border-top:1px solid #eee;">
-            <div style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px;">
-                <b>Bước 6: Kết luận miền nghiệm</b><br>
-                Hãy <b>click trực tiếp lên hình vẽ bên phải</b> vào một điểm thuộc <b>miền nghiệm đúng</b> để hệ thống kiểm tra!
+            <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 6px;">
+                <b>Bước 6:</b> Hãy <b>click trực tiếp lên mặt phẳng tọa độ</b> vào miền nghiệm đúng!
             </div>
             <div id="learn-msg-6" style="font-size:0.8rem; color:var(--primary-color); font-weight:bold; margin-top:4px;">Hãy click chọn miền nghiệm</div>
         `;
 
-        // Lắng nghe sự kiện click trên khung SVG đồ thị bên phải
         const svg = document.getElementById("coordinate-system");
         
-        // Gỡ bỏ sự kiện cũ nếu có để tránh bị lặp
         if (this.svgClickHandler) {
             svg.removeEventListener("click", this.svgClickHandler);
         }
@@ -948,11 +1009,9 @@ const LearningMode = {
             const centerX = width / 2 + panX;
             const centerY = height / 2 + panY;
 
-            // Quy đổi tọa độ click chuột sang hệ tọa độ toán học (x, y)
             const clickX = (e.clientX - rect.left - centerX) / scale;
             const clickY = (centerY - (e.clientY - rect.top)) / scale;
 
-            // Kiểm tra xem điểm học sinh click có thỏa mãn bất phương trình hay không
             const val = this.data.a * clickX + this.data.b * clickY;
             let ok = false;
             const op = this.data.op;
@@ -963,23 +1022,48 @@ const LearningMode = {
             else if (op === '>') ok = val > c;
 
             const msgBox = document.getElementById("learn-msg-6");
+            svg.removeEventListener("click", this.svgClickHandler);
+
             if (ok) {
-                msgBox.style.color = "var(--success-color)";
-                msgBox.textContent = `Em đã chọn đúng miền nghiệm 🎉`;
-                
-                // Gỡ bỏ sự kiện click sau khi hoàn thành đúng
-                svg.removeEventListener("click", this.svgClickHandler);
-				renderGraph(); // Lúc này op != '=', miền nghiệm sẽ chính thức xuất hiện trên màn hình
+                renderGraph();
 
+                if (this.mode === 'basic') {
+                    msgBox.style.color = "var(--success-color)";
+                    msgBox.textContent = `Em đã chọn đúng miền nghiệm 🎉`;
+                } else {
+                    // Chế độ phản xạ
+                    this.score += 1;
+                    document.getElementById("display-student-score").textContent = this.score;
 
+                    if (this.score >= 10) {
+                        msgBox.style.color = "var(--success-color)";
+                        msgBox.textContent = `🎉 CHÚC MỪNG ${this.studentName.toUpperCase()} ĐÃ ĐẠT 10/10 ĐIỂM! 🎉`;
+                        alert(`Chúc mừng ${this.studentName} đã xuất sắc đạt 10/10 điểm trong Chế độ Phản xạ!`);
+                    } else {
+                        msgBox.style.color = "var(--success-color)";
+                        msgBox.textContent = `Đúng rồi! +1 điểm. Đang tải câu tiếp theo...`;
+                        setTimeout(() => this.startSession(), 1200);
+                    }
+                }
             } else {
-                msgBox.style.color = "var(--danger-color)";
-                msgBox.textContent = `Xác định miền nghiệm chưa đúng! Hãy thử lại!`;
+                if (this.mode === 'basic') {
+                    msgBox.style.color = "var(--danger-color)";
+                    msgBox.textContent = `Xác định miền nghiệm chưa đúng! Hãy thử chọn lại!`;
+                    // Cho phép click chọn lại ở chế độ cơ bản
+                    svg.addEventListener("click", this.svgClickHandler);
+                } else {
+                    // Chế độ phản xạ: Chọn sai về 0
+                    this.score = 0;
+                    document.getElementById("display-student-score").textContent = this.score;
+                    msgBox.style.color = "var(--danger-color)";
+                    msgBox.textContent = `Rất tiếc, em chọn sai! Điểm số về 0. Tải câu mới...`;
+                    setTimeout(() => this.startSession(), 1500);
+                }
             }
         };
 
         svg.addEventListener("click", this.svgClickHandler);
-    },
+    }
 };
 
 // Tự động kích hoạt module khi trang tải xong
