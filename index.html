@@ -1,240 +1,120 @@
 <!DOCTYPE html>
-
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HỖ TRỢ DẠY HỌC TỌA ĐỘ ĐIỂM TRONG MẶT PHẲNG</title>
-	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu diễn miền nghiệm bất phương trình bậc nhất hai ẩn</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome cho icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Thư viện Math.js hỗ trợ phân tích biểu thức toán học -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script type="module" src="script.js"></script>
 </head>
-
 <body>
-
-<div class="app-container">
-
-
-<header class="header">
-    <h1>HỖ TRỢ DẠY HỌC TỌA ĐỘ ĐIỂM TRONG MẶT PHẲNG</h1>
-	<p>Tác giả: Vũ Hữu Hùng, trường THPT Nguyễn Trãi - Thường Tín</p><br>
-	<button id="fullscreen-btn" class="fullscreen-btn" title="Toàn màn hình">
-        ⛶
-    </button>
-</header>	
-    <div class="mode-tabs">
-        <button class="mode-tab active" data-mode="read">
-            1. Đọc tọa độ điểm
-        </button>
-
-        <button class="mode-tab" data-mode="plot">
-            2. Vẽ điểm theo tọa độ
-        </button>
-		
-		<button class="mode-tab" data-mode="reflex">
-			3. Phản xạ
-		</button>
-    </div>
-
-
-
-<main class="app-main">
-
-    <aside class="control-panel">
-
-        <!-- BÀI ĐỌC TỌA ĐỘ -->
-        <section id="read-panel" class="exercise-panel">
-
-            <h3>Đọc tọa độ điểm</h3>
-
-            <p class="instruction">
-                Quan sát điểm
-                <strong id="read-point-name">A</strong>
-                trên mặt phẳng và nhập tọa độ.
-            </p>
-
-            <div class="input-row">
-
-                <div class="input-group">
-                    <label>Hoành độ x</label>
-                    <input
-                        id="answer-x"
-                        type="number"
-                        step="1"
-                        autocomplete="off"
-                    >
-                </div>
-
-                <div class="input-group">
-                    <label>Tung độ y</label>
-                    <input
-                        id="answer-y"
-                        type="number"
-                        step="1"
-                        autocomplete="off"
-                    >
-                </div>
-
-            </div>
-
-            <button id="check-answer" class="btn btn-primary">
-                Kiểm tra
-            </button>
-
-            <div id="read-feedback" class="feedback"></div>
-
-        </section>
-
-
-        <!-- BÀI VẼ ĐIỂM -->
-        <section id="plot-panel" class="exercise-panel" hidden>
-
-            <h3>Vẽ điểm có tọa độ cho trước</h3>
-
-            <p class="instruction">
-                Hãy click vào đúng vị trí của điểm
-                <strong id="plot-point-name">A</strong>.
-            </p>
-
-            <div class="target-coordinate">
-                <span id="target-coordinate">(2; 3)</span>
-            </div>
-
-            <div id="plot-feedback" class="feedback"></div>
-
-        </section>
-
-
-				<section id="reflex-panel" class="exercise-panel" hidden>
-			<h3>Phản xạ tọa độ</h3>
-
-			<p class="instruction">
-				Quan sát điểm
-				<strong id="reflex-point-name">A</strong>
-				và nhập tọa độ.
-			</p>
-
-			<div class="input-row">
-				<div class="input-group">
-					<label>Hoành độ x</label>
-					<input
-						id="reflex-answer-x"
-						type="number"
-						step="1"
-						autocomplete="off"
-					>
-				</div>
-
-				<div class="input-group">
-					<label>Tung độ y</label>
-					<input
-						id="reflex-answer-y"
-						type="number"
-						step="1"
-						autocomplete="off"
-					>
-				</div>
-			</div>
-
-			<button id="reflex-submit" class="btn btn-primary">
-				Trả lời
+    <div class="app-container">
+        <!-- Tiêu đề ứng dụng -->
+        <header class="app-header">
+            <h1>BIỂU DIỄN MIỀN NGHIỆM CỦA HỆ BPT BẬC NHẤT HAI ẨN</h1>
+			<p>Tác giả: Vũ Hữu Hùng, trường THPT Nguyễn Trãi - Thường Tín</p>
+			<button id="fullscreen-btn" class="fullscreen-btn" title="Toàn màn hình">
+				⛶
 			</button>
+        </header>
 
-			<div id="reflex-feedback" class="feedback"></div>
-		</section>
+        <!-- Bố cục chính -->
+        <main class="app-main">
+            <!-- BẢNG ĐIỀU KHIỂN BÊN TRÁI -->
+            <aside class="control-panel">
+                <div class="panel-section">
+                    <h3><i class="fa-solid fa-sliders"></i> Danh sách bất phương trình</h3>
+                    
+                    <!-- Khung chứa các bất phương trình -->
+                    <div id="function-cards-container">
+                        <!-- Các card bất phương trình sẽ được sinh tự động bằng JS -->
+                    </div>
 
-        <!-- ĐIỂM -->
-        <section class="score-section">
+                    <button id="btn-add-inequality" class="btn btn-primary" style="margin-top: 8px;">
+                        <i class="fa-solid fa-plus"></i> Thêm bất phương trình
+                    </button>
+                </div>
 
-            <div class="score">
-                <span>Điểm</span>
-                <strong id="score">0</strong>
-            </div>
+                <div class="panel-section">
+                    <div class="input-group">
+                        <label for="ox-unit-select">Đơn vị chia trên trục:</label>
+                        <select id="ox-unit-select">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
 
-            <button id="new-exercise" class="btn btn-success">
-                Bài mới
-            </button>
+                <div class="panel-section">
+                    <h3><i class="fa-solid fa-magnifying-glass"></i> Điều khiển hiển thị</h3>
+                    <div class="zoom-pan-controls">
+                        <button id="btn-zoom-in" class="btn btn-icon" title="Phóng to"><i class="fa-solid fa-plus"></i></button>
+                        <button id="btn-zoom-out" class="btn btn-icon" title="Thu nhỏ"><i class="fa-solid fa-minus"></i></button>
+                        <button id="btn-reset-view" class="btn btn-secondary" title="Khôi phục mặc định">Reset góc nhìn</button>
+                    </div>
+					<div class="panel-section">
+						<h3><i class="fa-solid fa-font"></i> Cỡ chữ & Xuất ảnh</h3>
+						<div class="zoom-pan-controls" style="margin-bottom: 8px;">
+							<button id="btn-font-inc" class="btn btn-secondary" title="Tăng cỡ chữ"><i class="fa-solid fa-plus"></i> Cỡ chữ</button>
+							<button id="btn-font-dec" class="btn btn-secondary" title="Giảm cỡ chữ"><i class="fa-solid fa-minus"></i> Cỡ chữ</button>
+						</div>
+						<button id="btn-copy-clipboard" class="btn btn-success" style="width: 100%;">
+							<i class="fa-solid fa-copy"></i> Copy ảnh vào Clipboard (200 PPI)
+						</button>
+					</div>
+                    <small class="hint">Mẹo: Kéo chuột trái (Pan) để dịch chuyển mặt phẳng, cuộn chuột (Zoom) để phóng to/thu nhỏ.</small>
+                </div>
 
-        </section>
+                <!-- Thông báo lỗi cú pháp -->
+                <div id="error-message" class="error-banner" style="display: none;"></div>
+            </aside>
 
-    </aside>
+            <!-- MẶT PHẲNG TỌA ĐỘ SVG BÊN PHẢI -->
+            <section class="graph-viewport">
+                <svg id="coordinate-system" width="100%" height="100%">
+                    <defs>
+                        <!-- Các pattern gạch miên không phải miền nghiệm -->
+                        <pattern id="pattern-solid" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <rect width="10" height="10" fill="currentColor" opacity="0.15"/>
+                        </pattern>
+                        <pattern id="pattern-slash" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                        </pattern>
+                        <pattern id="pattern-backslash" width="10" height="10" patternTransform="rotate(-45 0 0)" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                        </pattern>
+                        <pattern id="pattern-horizontal" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                        </pattern>
+                        <pattern id="pattern-vertical" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <line x1="5" y1="0" x2="5" y2="10" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                        </pattern>
+                    </defs>
+                    <!-- Các thành phần đồ thị vẽ qua JS -->
+                </svg>
+                
+                <div id="cursor-coords" class="cursor-coords">x: 0.00, y: 0.00</div>
+            </section>
+        </main>
+    </div>
 
-
-    <!-- MẶT PHẲNG TỌA ĐỘ -->
-    <section class="graph-viewport">
-
-        <svg
-            id="coordinate-system"
-            xmlns="http://www.w3.org/2000/svg"
-        ></svg>
-
-		<!-- Khối nút hỗ trợ Zoom/Reset trên điện thoại -->
-		<div class="zoom-controls">
-			<button id="zoom-in-btn" class="zoom-btn" title="Phóng to">+</button>
-			<button id="zoom-reset-btn" class="zoom-btn" title="Đặt lại xem mặc định">⟲</button>
-			<button id="zoom-out-btn" class="zoom-btn" title="Thu nhỏ">−</button>
-		</div>
-		
-        <div
-            id="cursor-coords"
-            class="cursor-coords"
-        >
-            (0; 0)
-        </div>
-
-    </section>
-
-</main>
-
-
-</div>
-
-
-<!-- Thông báo yêu cầu xoay ngang trên mobile -->
-<div id="orientation-warning" class="orientation-warning">
-    <div class="orientation-warning-content">
-        <div class="orientation-icon">↻</div>
-        <h2>Vui lòng xoay ngang màn hình</h2>
-        <p>Ứng dụng được thiết kế để sử dụng ở chế độ ngang.</p>
+<!-- Cảnh báo xoay ngang màn hình cho thiết bị di động -->
+<div id="rotate-warning" class="rotate-overlay">
+    <div class="rotate-content">
+        <i class="fa-solid fa-mobile-screen-button fa-beat" style="font-size: 50px; margin-bottom: 15px; color: var(--primary-color);"></i>
+        <h2>Vui lòng xoay ngang điện thoại</h2>
+        <p>Ứng dụng biểu diễn miền nghiệm cần không gian rộng để hiển thị đồ thị và thao tác chính xác nhất.</p>
     </div>
 </div>
-
-<!-- Modal luật chơi phản xạ -->
-<div id="reflex-rules-modal" class="reflex-modal" hidden>
-    <div class="reflex-modal-overlay"></div>
-
-    <div class="reflex-modal-box">
-        <h2>Phản xạ tọa độ</h2>
-
-        <div class="reflex-rules">
-            <p><strong>Nhập thông tin học sinh:</strong></p>
-            <div class="input-group" style="margin-bottom: 12px;">
-                <label for="student-name-input">Họ và tên học sinh</label>
-                <input 
-                    id="student-name-input" 
-                    type="text" 
-                    placeholder="Nhập họ và tên của bạn..." 
-                    autocomplete="off"
-                    style="width: 100%; padding: 9px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; outline: none;"
-                >
-            </div>
-
-            <p><strong>Luật chơi:</strong></p>
-            <ul>
-                <li>Hệ thống sẽ liên tục đưa ra các câu hỏi về tọa độ điểm.</li>
-                <li>Trả lời đúng: được cộng 1 điểm.</li>
-                <li>Trả lời sai: điểm trở về 0.</li>
-                <li>Lượt chơi kết thúc khi người chơi đạt 10 điểm.</li>
-            </ul>
-        </div>
-
-        <div class="reflex-modal-actions">
-            <button id="reflex-cancel" class="btn btn-secondary">Hủy</button>
-            <button id="reflex-start" class="btn btn-primary">Đồng ý, bắt đầu</button>
-        </div>
-    </div>
-</div>
-
-<script src="app.js"></script>
-
 </body>
 </html>
